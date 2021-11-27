@@ -1,0 +1,19 @@
+{
+  "name": "buoysbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@discordjs/voice": "^0.7.5",
+    "discord.js": "^13.3.1",
+    "libsodium-wrappers": "^0.7.9",
+    "yt-search": "^2.10.2",
+    "ytdl": "*"
+  }
+}

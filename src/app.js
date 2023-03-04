@@ -1,20 +1,21 @@
-const { Client, Intents }  = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 const ytdl = require("ytdl-core");
 const yts = require("yt-search");
 
 const { play, stop, setupPlayer } = require('./playback.js');
 
+
 const prefix = process.env.PREFIX ?? "-";
 const token = process.env.DISCORD_TOKEN;
-
 const queue = new Map();
 
 const client = new Client({
   intents: [
-    Intents.FLAGS.GUILDS,
-    Intents.FLAGS.GUILD_MESSAGES,
-    Intents.FLAGS.GUILD_VOICE_STATES
-  ],
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.MessageContent,
+  ]
 });
 client.login(token);
 

@@ -1,3 +1,4 @@
+const { PermissionsBitField } = require('discord.js');
 const {
   createAudioResource,
   entersState,
@@ -6,7 +7,10 @@ const {
   createAudioPlayer,
   AudioPlayerStatus,
   VoiceConnectionStatus,
+  NoSubscriberBehavior,
 } = require('@discordjs/voice');
+
+const maxTransmissionGap = 5000;
 
 function playSong(player, url) {
   const resource = createAudioResource(url, {
@@ -37,11 +41,16 @@ async function setupPlayer(client, guildId, textChannel, voiceChannel) {
   }
 
   const permissions = voiceChannel.permissionsFor(client.user);
-  if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
+  if (!permissions.has(PermissionsBitField.Flags.Connect) || !permissions.has(PermissionsBitField.Flags.Speak)) {
     return "I need the permissions to join and speak in your voice channel!";
   }
 
-  const player = createAudioPlayer();
+  const player = createAudioPlayer({
+    behaviors: {
+      noSubscriber: NoSubscriberBehavior.Play,
+      maxMissedFrames: Math.round(maxTransmissionGap / 20),
+    },
+  });
   const connection = await connectToChannel(voiceChannel);
   connection.subscribe(player);
 
@@ -77,6 +86,22 @@ async function connectToChannel(channel) {
     channelId: channel.id,
     guildId: channel.guild.id,
     adapterCreator: channel.guild.voiceAdapterCreator,
+  });
+
+  // Disable the udp keepalive to prevent the audio stopping after ~60s
+  // https://github.com/discordjs/discord.js/issues/9185
+  connection.on('stateChange', (oldState, newState) => {
+    console.log("connection state change thing");
+    const oldNetworking = Reflect.get(oldState, 'networking');
+    const newNetworking = Reflect.get(newState, 'networking');
+
+    const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+      const newUdp = Reflect.get(newNetworkState, 'udp');
+      clearInterval(newUdp?.keepAliveInterval);
+    }
+
+    oldNetworking?.off('stateChange', networkStateChangeHandler);
+    newNetworking?.on('stateChange', networkStateChangeHandler);
   });
 
   try {
